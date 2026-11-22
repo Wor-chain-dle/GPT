@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'release/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check patch whitespace
+        run: git show --format= --check HEAD
+      - name: Check bootstrap documents
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          required = ['README.md', 'AGENTS.md', 'CLAUDE.md']
+          for name in ('pr', 'cleanup', 'bump-version'):
+              required.extend([
+                  f'.agents/skills/{name}/SKILL.md',
+                  f'.claude/skills/{name}/SKILL.md',
+              ])
+          for filename in required:
+              path = Path(filename)
+              assert path.is_file() and path.read_text().strip(), filename
+          implementation = [
+              path for path in Path('.').rglob('*')
+              if '.git' not in path.parts and path.is_file()
+              and path.suffix in ('.py', '.ipynb', '.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx')
+          ]
+          assert not implementation, 'Replace bootstrap CI with implementation checks before adding code'
+          print('Workflow documents checked. No model or training tests exist yet.')
+          PY

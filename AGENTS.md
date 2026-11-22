@@ -11,9 +11,10 @@ to solve Wor-chain-dle.
 - Do not record discussion candidates as decisions. Add model architecture,
   tokenization, training, framework, or hardware choices only after the developer
   has confirmed them.
-- The repository currently contains project and workflow documents. No model,
-  training framework, version manifest, or publishing automation is configured.
-- Keep README focused on the confirmed goal until the developer requests more.
+- Development uses Python 3.12 and uv with `pyproject.toml` and `uv.lock`.
+  Experiment recording uses backend-independent protocols and an optional MLflow
+  adapter. No model, training framework, or publishing automation is configured.
+- Keep README focused on the project goal and actual setup and usage.
 - Do not change the web, engine, or Organization profile repository incidentally.
 
 ## Branches And Merge Rules
@@ -101,21 +102,22 @@ These settings follow the original `Ootzk/Wor-chain-dle` repository:
 
 - Use full semver and a `v` prefix in release branch names, milestones, tags, and
   prose. Use bare semver where an existing manifest expects it.
-- No version source exists yet. Identify established version files before a bump;
-  do not introduce a package manager, framework, or version file just to bump it.
+- The package version source is `pyproject.toml`; refresh `uv.lock` when it changes.
 - Update existing version sources consistently. Do not copy the web-only
   `PATCH_NOTES_VERSION` or deployment workflow here.
-- The current target is v0.1.0 on `release/v0.1.0`; no version manifest exists yet.
+- The current target is v0.1.0 on `release/v0.1.0`.
   Do not create tags, publish artifacts, or claim automatic releases merely because
   a branch reaches `main`.
 
 ## Verification And Workflow Files
 
 - `.github/workflows/ci.yml` supplies the `test` check on PRs and main/release pushes.
-  It currently verifies bootstrap documents, not model behavior or training results.
-- Replace bootstrap checks with agreed implementation checks when code/tooling is
-  introduced. Do not silently pass an empty test suite or describe documentation
-  validation as a model test.
+  It installs locked dependencies and checks Ruff formatting/lint and pytest.
+  Tests verify tracking configuration, lifecycle, metrics, and artifacts with
+  temporary stores; they do not use private tracking servers or credentials.
+- `uv sync --locked --extra mlflow` prepares the environment. Use `uv run --locked`
+  for checks and `uv run --locked --extra mlflow --env-file .env wcd-check-tracking`
+  for an explicit remote connection check. This is not a model/training benchmark.
 - Documentation-only work needs whitespace and reference checks, not a training run.
 - For code behavior changes, add meaningful tests and run the applicable checks.
   Report only actual measured outcomes.
@@ -126,3 +128,15 @@ These settings follow the original `Ootzk/Wor-chain-dle` repository:
   merge status; do not force-delete blindly.
 - Communicate in Korean. Keep summaries focused on changes, verification, and
   remaining work.
+
+## Experiment Tracking Boundaries
+
+- Callers depend on `tracking.interfaces`, not the MLflow SDK. Add future backend
+  adapters behind these protocols and select them through configuration.
+- Never hard-code server addresses or credentials in source, docs, tests, workflow
+  files, or lockfiles. Use ignored `.env` files or process environment; GitHub
+  workflows obtain private connection/auth values from Secrets.
+- Never log raw environment variables or credential files as artifacts. Use explicit
+  metadata allowlists. Connection-check runs must be labeled as such.
+- Keep MLflow optional (`--extra mlflow`). Do not introduce a training framework,
+  model architecture, or remote training dependency as part of tracking setup.

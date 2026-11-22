@@ -12,6 +12,8 @@ to solve Wor-chain-dle.
   tokenization, training, framework, or hardware choices only after the developer
   has confirmed them.
 - Development uses Python 3.12 and uv with `pyproject.toml` and `uv.lock`.
+  The released Node.js 22+ engine is installed from its GitHub Release tarball with
+  `npm ci --ignore-scripts`; package-lock.json pins its integrity and dependencies.
   Experiment recording uses backend-independent protocols and an optional MLflow
   adapter. No model, training framework, or publishing automation is configured.
 - Keep README focused on the project goal and actual setup and usage.
@@ -112,9 +114,9 @@ These settings follow the original `Ootzk/Wor-chain-dle` repository:
 ## Verification And Workflow Files
 
 - `.github/workflows/ci.yml` supplies the `test` check on PRs and main/release pushes.
-  It installs locked dependencies and checks Ruff formatting/lint and pytest.
-  Tests verify tracking configuration, lifecycle, metrics, and artifacts with
-  temporary stores; they do not use private tracking servers or credentials.
+  It installs locked Python dependencies and the released Node engine, then checks
+  Ruff formatting/lint and pytest. Tests execute the installed engine and use
+  temporary tracking stores; they do not use private servers or credentials.
 - `uv sync --locked --extra mlflow` prepares the environment. Use `uv run --locked`
   for checks and `uv run --locked --extra mlflow --env-file .env wcd-check-tracking`
   for an explicit remote connection check. This is not a model/training benchmark.
@@ -140,3 +142,19 @@ These settings follow the original `Ootzk/Wor-chain-dle` repository:
   metadata allowlists. Connection-check runs must be labeled as such.
 - Keep MLflow optional (`--extra mlflow`). Do not introduce a training framework,
   model architecture, or remote training dependency as part of tracking setup.
+
+## Experiment Environment
+
+- `environment.py` wraps the Python client shipped in the installed engine package.
+  Do not copy game logic or depend on a sibling source checkout. Reject unsupported
+  engine/protocol versions explicitly. Keep engine updates separate from web releases.
+- Callers choose solutions or seeded answer sampling; policies receive only public
+  observations. Keep creation requests, answer-selection seeds, and environment
+  internals out of model inputs. Saved experiment artifacts belong to the runner.
+- `terminated` means an engine win/loss. `truncated` means the runner's action budget
+  was exhausted; do not convert it into an engine loss or fabricate a submitted guess.
+- `wcd-run` is a diagnostic random-policy runner, not model training. Its key mode
+  types a sampled full word; it is not a learned character policy. No reward,
+  token vocabulary, train/evaluation split, or compute backend has been selected.
+- Local results go under ignored `runs/` directories. Remote recording requires
+  `--track`; failures propagate while completed local results are preserved.

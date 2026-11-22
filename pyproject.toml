@@ -14,6 +14,7 @@ mlflow = ["mlflow-skinny==3.18.0"]
 
 [project.scripts]
 wcd-check-tracking = "wor_chain_dle_gpt.tracking.check:main"
+wcd-run = "wor_chain_dle_gpt.experiments:main"
 
 [dependency-groups]
 dev = ["pytest>=8,<10", "ruff>=0.11,<1"]

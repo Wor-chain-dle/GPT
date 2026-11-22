@@ -1,0 +1,8 @@
+{
+  "name": "wor-chain-dle-gpt-engine-runtime",
+  "private": true,
+  "engines": { "node": ">=22" },
+  "dependencies": {
+    "@wor-chain-dle/engine": "https://github.com/Wor-chain-dle/engine/releases/download/v0.1.0/wor-chain-dle-engine-0.1.0.tgz"
+  }
+}

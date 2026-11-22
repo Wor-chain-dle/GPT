@@ -4,10 +4,11 @@ Build and train a model from scratch using the principles of large language mode
 
 ## Development
 
-Requires [uv](https://docs.astral.sh/uv/getting-started/installation/).
+Requires Node.js 22+ and [uv](https://docs.astral.sh/uv/getting-started/installation/).
 Python 3.12 and dependencies are managed by `.python-version` and `uv.lock`.
 
 ```bash
+npm ci --ignore-scripts
 uv sync --locked --extra mlflow
 cp .env.example .env
 ```
@@ -21,6 +22,34 @@ uv run --locked --extra mlflow --env-file .env wcd-check-tracking
 This creates a `connection-check` run, logs parameters, a test metric, and a JSON
 artifact, then downloads them to verify the round trip. It is a connection check,
 not a training result. The run ID is printed on success.
+
+## Experiment environment
+
+Run repeatable episodes against the released engine package:
+
+```bash
+# Local results; no tracking server or GPU required.
+uv run --locked wcd-run --episodes 10 --seed 123 --mode key
+uv run --locked wcd-run --episodes 10 --seed 123 --mode word
+
+# Optional recording through your configured tracker.
+uv run --locked --extra mlflow --env-file .env wcd-run --episodes 10 --track
+```
+
+Each run saves `config.json`, `episodes.jsonl`, and `summary.json` in a unique
+ignored `runs/` directory. The runner records engine/protocol/dictionary versions,
+seeds, actions, feedback, and actual counters. Tracking failures preserve local
+results and return an error.
+
+This command uses a random legal-word sampler to check the environment. In key
+mode it types the sampled word one character at a time. It is not a trained model
+or an evaluation benchmark. Training hardware remains undecided.
+
+Use `GameEnvironment.reset()` / `step(action)` to plug in another policy. Both
+character actions and full-word submissions are supported. Observations exclude
+the selected answer. Action-budget exhaustion is `truncated`, separate from an
+engine win or loss. No reward function or token encoding is selected yet.
+See [the environment interface](docs/ENVIRONMENT.md) for examples and semantics.
 
 ## Experiment tracking
 

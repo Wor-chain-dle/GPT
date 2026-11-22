@@ -18,30 +18,19 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          version: '0.11.2'
+          enable-cache: true
       - name: Check patch whitespace
         run: git show --format= --check HEAD
-      - name: Check bootstrap documents
+      - name: Install locked environment
+        run: uv sync --locked --extra mlflow
+      - name: Check Python
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          required = ['README.md', 'AGENTS.md', 'CLAUDE.md']
-          for name in ('pr', 'cleanup', 'bump-version'):
-              required.extend([
-                  f'.agents/skills/{name}/SKILL.md',
-                  f'.claude/skills/{name}/SKILL.md',
-              ])
-          for filename in required:
-              path = Path(filename)
-              assert path.is_file() and path.read_text().strip(), filename
-          implementation = [
-              path for path in Path('.').rglob('*')
-              if '.git' not in path.parts and path.is_file()
-              and path.suffix in ('.py', '.ipynb', '.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx')
-          ]
-          assert not implementation, 'Replace bootstrap CI with implementation checks before adding code'
-          print('Workflow documents checked. No model or training tests exist yet.')
-          PY
+          uv run --locked --extra mlflow ruff check .
+          uv run --locked --extra mlflow ruff format --check .
+          uv run --locked --extra mlflow pytest
